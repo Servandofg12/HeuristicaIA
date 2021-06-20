@@ -292,14 +292,14 @@ class CosteEsquema:
 # -----------------------------------------------------------------------------
 
 
-class ProblemaPlanificación(probee.ProblemaEspacioEstados):
+class ProblemaPlanificación(probee.ProblemaEspacioEstados):#no me deja sacar los operadores
     def __init__(self, operadores, estado_inicial,
                  objetivosP=None, objetivosN=None):
         self.objetivosP = agrupar_diccionarios(objetivosP)
         self.objetivosN = agrupar_diccionarios(objetivosN)
         if not isinstance(operadores, list):
             operadores = [operadores]
-            self.operadores = operadores
+        self.operadores = operadores
         acciones = sum(([operador] if isinstance(operador, AcciónPlanificación)
                        else operador.obtener_acciones()
                        for operador in operadores), [])
@@ -309,6 +309,14 @@ class ProblemaPlanificación(probee.ProblemaEspacioEstados):
         return (estado.satisface_positivas(self.objetivosP) and
                 estado.satisface_negativas(self.objetivosN))
     
-    def obtener_operadores(self):
+    def obtener_operadores(self):#no lo coge bien
         return self.operadores
+    
+    def obtener_objetivosP(self):
+        return self.objetivosP
+    
+    def obtener_estado_inicial(self):
+        return self.estado_inicial
 
+    def obtener_self(self):
+        return self

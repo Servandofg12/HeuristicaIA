@@ -182,9 +182,8 @@ class BúsquedaGeneral:
     def buscarConHeuristica(self, problema):
         self.frontera.vaciar()
         self.explorados.vaciar()
-        #nuevo esto(fallo: no se ponen los datos como debería)
-        self.frontera.añadir(self.Nodo(problema.estado_inicial,
-                                    BúsquedaConHeuristica.pregoGeneral(estado_inicial_rueda, objetivosPositivos, operadores, True)))
+        self.frontera.añadir(self.Nodo(problema.estado_inicial))
+            #
         while True:
             if not self.frontera:
                 return None
@@ -302,7 +301,7 @@ class NodoConHeurística(NodoSimple):#HEURISTICA
         return 0
     
 class NodoConHeurísticaPRUEBA(NodoSimple):#HEURISTICA
-    def __init__(self, estado, pregoGeneral, padre=None, acción=None):
+    def __init__(self, estado, padre=None, acción=None):
         super().__init__(estado, padre, acción)
         if self.es_raíz():
             self.profundidad = 0
@@ -310,11 +309,99 @@ class NodoConHeurísticaPRUEBA(NodoSimple):#HEURISTICA
         else:
             self.profundidad = padre.profundidad + 1
             self.coste = padre.coste + acción.coste_de_aplicar(padre.estado)
-        self.heurística = staticmethod(pregoGeneral)
-
+        self.heurística = self.f(self)
+        
+    @staticmethod#HEURISTICA
+    def f(nodo):
+        return NodoConHeurísticaPRUEBA.pregoGeneral(nodo.estado, objetivosPositivos, operadores, True)
+        
     def __str__(self):
         return 'Estado: {0}; Prof: {1}; Heur: {2}; Coste: {3}'.format(
             self.estado, self.profundidad, self.heurística, self.coste)
+    
+    @staticmethod
+    def pregoGeneral(estado_inicial, objetivo, operadores, heuristica=False):
+        if heuristica:
+            print("")
+            print("------COMIENZO DE LA HEURISTA------")
+            lista = BúsquedaConHeuristica.pregoRecursivo(estado_inicial, objetivo, operadores, heuristica)
+            solucion = reversed(lista)
+            
+            print("")
+            #La lista es al reves dado que vamos del objetivo al estado inicial
+            print("------LISTA REVERSA DE OPERADORES SOLUCION:------")
+            for operador in solucion:
+                print(operador.nombre)
+            print("")
+            
+            print("------LISTA NORMAL DE OPERADORES SOLUCION:------")
+            for operador in lista:
+                print(operador.nombre)
+            print("")
+                
+            print("------Cantidad para heuristica: " + str(len(lista)) + " ------")
+            print("")
+            return len(lista)
+        else:
+            print("")
+            print("NO SE HA USADO HEURISTICA")
+    
+   
+    @staticmethod#un objetivo formado por un solo literal positivo cerrado
+    def pregoRecursivo(estado_inicial, objetivo, operadores, heuristica=False):
+        lista = []#lista con los operadores solucion optima
+        if heuristica:
+            
+            #Si el estado e satisface p, entonces devolver prego(e,p) = lista vacía.
+            if estado_inicial.satisface_positivas(objetivo.atomos):
+                print("")
+                print("El estado inicial es el objetivo")
+                #return len(lista)
+                return lista
+    
+            #Si el estado e no satisface p, y además no existe ninguna acción que lo incluya entre sus
+            #efectos, entonces devolver prego(e,p) = lista con todas las acciones del problema
+            if estado_inicial.satisface_positivas(objetivo.atomos)==False:
+               listaEfectosPositivo = [] 
+               listaPrecondicionesPositivas = []
+               for operador in operadores:
+                   efectosDeOperador = operador.obtener_EfectosP()#hacerlo lista
+                   precondicionesDeOperador = operador.obtener_precondicionesP()#hacerlo lista
+                   listaEfectosPositivo.append(probpl.Estado(efectosDeOperador).atomos)
+                   listaPrecondicionesPositivas.append(probpl.Estado(precondicionesDeOperador).atomos)
+               
+               satisface = False
+               precondicionAGuardar = []
+               indice = 0
+               for efecto in listaEfectosPositivo:#Lista de diccionarios
+                   if probpl.Estado(efecto).satisface_positivas(objetivo.atomos) and satisface==False:
+                       satisface = True
+                       #lista.append(probpl.Estado(efecto).atomos)#Añadimos la precondicion del efecto que satisface el objetivo
+                       lista.append(operadores[indice])
+                       precondicionAGuardar.append(probpl.Estado(listaPrecondicionesPositivas[indice]))
+                   indice = indice + 1
+               if satisface==False:
+                   print("")
+                   print("Imposible de resolver")
+                   return operadores
+               
+            #En caso contrario, devolver la lista más corta entre las siguientes opciones:
+                #▪ [A] + prego(e,prepA),
+                #para cada acción A que tenga a p entre sus efectos, donde el “+” representa la
+                #concatenación de listas, y prepA representa la lista de literales positivos de la
+                #precondición de A
+               else:
+                   print("")
+                   print("Realización de iteración")
+                   #Cogemos la precondicion del operador que satisface al objetivo de esta iteracion
+                   precondiciones = precondicionAGuardar[len(precondicionAGuardar)-1]
+                   #A la lista resultado, lista de todos los operadores solucion, le concatenamos
+                   #el resto de operadores hasta que se llega al estado inicial
+                   lista+=BúsquedaConHeuristica.pregoRecursivo(estado_inicial, precondiciones, operadores, True)
+                   return lista
+        else:
+            return lista
+    
 
 
 class BúsquedaConHeuristica(BúsquedaGeneral):#HEURISTICA
@@ -326,7 +413,7 @@ class BúsquedaConHeuristica(BúsquedaGeneral):#HEURISTICA
         self.explorados = ListaNodos()
         self.explorados.__contains__ = types.MethodType(
             lambda self, nodo: any(x.estado == nodo.estado and
-                                  self.pregoGeneral >= nodo.heurística 
+                                  x.heurística <= nodo.pregoGeneral 
                                    for x in self),
             self.explorados)
         
@@ -413,6 +500,99 @@ class BúsquedaConHeuristica(BúsquedaGeneral):#HEURISTICA
         else:
             return lista
         
+    @staticmethod
+    def pregoGeneral2(estado_inicial, problemaPlanificacion, heuristica=False):
+        if heuristica:
+            print("")
+            print("------COMIENZO DE LA HEURISTA------")
+            lista = BúsquedaConHeuristica.pregoRecursivo2(estado_inicial, problemaPlanificacion, heuristica)
+            solucion = reversed(lista)
+            
+            print("")
+            #La lista es al reves dado que vamos del objetivo al estado inicial
+            print("------LISTA REVERSA DE OPERADORES SOLUCION:------")
+            for operador in solucion:
+                print(operador.nombre)
+            print("")
+            
+            print("------LISTA NORMAL DE OPERADORES SOLUCION:------")
+            for operador in lista:
+                print(operador.nombre)
+            print("")
+                
+            print("------Cantidad para heuristica: " + str(len(lista)) + " ------")
+        
+            return len(lista)
+        else:
+            print("")
+            print("NO SE HA USADO HEURISTICA")
+    
+   
+    @staticmethod#un objetivo formado por un solo literal positivo cerrado
+    def pregoRecursivo2(estado_inicial, problemaPlanificacion, heuristica=False):
+        lista = []#lista con los operadores solucion optima
+        objetivo = problemaPlanificacion.obtener_objetivosP()#lo coge bien
+        print("OBJETIVO")
+        print(objetivo)
+        print("ESTADO INICIAL")
+        print(problemaPlanificacion.obtener_estado_inicial())
+        operadores = problemaPlanificacion.obtener_operadores()#no lo coge
+        if heuristica:
+            
+            #Si el estado e satisface p, entonces devolver prego(e,p) = lista vacía.
+            if estado_inicial.satisface_positivas(objetivo.atomos):
+                print("")
+                print("El estado inicial es el objetivo")
+                #return len(lista)
+                return lista
+    
+            #Si el estado e no satisface p, y además no existe ninguna acción que lo incluya entre sus
+            #efectos, entonces devolver prego(e,p) = lista con todas las acciones del problema
+            if estado_inicial.satisface_positivas(objetivo.atomos)==False:
+               listaEfectosPositivo = [] 
+               listaPrecondicionesPositivas = []
+               for operador in operadores:
+                   efectosDeOperador = operador.obtener_EfectosP()#hacerlo lista
+                   precondicionesDeOperador = operador.obtener_precondicionesP()#hacerlo lista
+                   listaEfectosPositivo.append(probpl.Estado(efectosDeOperador).atomos)
+                   listaPrecondicionesPositivas.append(probpl.Estado(precondicionesDeOperador).atomos)
+               
+               satisface = False
+               precondicionAGuardar = []
+               indice = 0
+               for efecto in listaEfectosPositivo:#Lista de diccionarios
+                   if probpl.Estado(efecto).satisface_positivas(objetivo.atomos) and satisface==False:
+                       satisface = True
+                       #lista.append(probpl.Estado(efecto).atomos)#Añadimos la precondicion del efecto que satisface el objetivo
+                       lista.append(operadores[indice])
+                       precondicionAGuardar.append(probpl.Estado(listaPrecondicionesPositivas[indice]))
+                   indice = indice + 1
+               if satisface==False:
+                   print("")
+                   print("Imposible de resolver")
+                   return operadores
+               
+            #En caso contrario, devolver la lista más corta entre las siguientes opciones:
+                #▪ [A] + prego(e,prepA),
+                #para cada acción A que tenga a p entre sus efectos, donde el “+” representa la
+                #concatenación de listas, y prepA representa la lista de literales positivos de la
+                #precondición de A
+               else:
+                   print("")
+                   print("Realización de iteración")
+                   #Cogemos la precondicion del operador que satisface al objetivo de esta iteracion
+                   precondiciones = precondicionAGuardar[len(precondicionAGuardar)-1]
+                   #A la lista resultado, lista de todos los operadores solucion, le concatenamos
+                   #el resto de operadores hasta que se llega al estado inicial
+                   nuevoProblemaPlanificacion = probpl.ProblemaPlanificación(
+                        operadores=operadores,
+                        estado_inicial=estado_inicial,
+                        objetivosP=precondiciones.atomos
+                        )
+                   lista+=BúsquedaConHeuristica.pregoRecursivo2(estado_inicial,nuevoProblemaPlanificacion, True)
+                   return lista
+        else:
+            return lista
         
     def resolverConHeuristica(estado_inicial, objetivo, operadores, heuristica=False):
         numHeuristica = BúsquedaConHeuristica.pregoGeneral(estado_inicial, objetivo, operadores, heuristica)
