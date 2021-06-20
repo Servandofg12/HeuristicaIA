@@ -299,7 +299,9 @@ class ProblemaPlanificación(probee.ProblemaEspacioEstados):#no me deja sacar lo
         self.objetivosN = agrupar_diccionarios(objetivosN)
         if not isinstance(operadores, list):
             operadores = [operadores]
-        self.operadores = operadores
+            self.operadores = operadores
+        else:
+            self.operadores = operadores
         acciones = sum(([operador] if isinstance(operador, AcciónPlanificación)
                        else operador.obtener_acciones()
                        for operador in operadores), [])
