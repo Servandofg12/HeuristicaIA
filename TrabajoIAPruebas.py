@@ -124,7 +124,7 @@ busqueda_con_heuristica = búsqee.BúsquedaConHeuristica(búsqee.BúsquedaConHeu
 busqueda_con_heuristica.buscar(problema_rueda_pinchada)
 búsqee.BúsquedaConHeuristica.resolverConHeuristica(estado_inicial_rueda, objetivosPositivos, operadores,True)
 
-#Con heuristica PRUEBA
+#Con heuristica PRUEBA -hace bien la heurística-
 busqueda_con_heuristica_prueba = búsqee.BúsquedaConHeuristicaPRUEBA(búsqee.BúsquedaConHeuristicaPRUEBA.pregoGeneral(estado_inicial_rueda, objetivosPositivos, operadores,True))
 busqueda_con_heuristica_prueba.buscarConHeuristica(problema_rueda_pinchada)
 
