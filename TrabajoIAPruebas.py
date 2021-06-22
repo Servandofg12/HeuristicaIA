@@ -4,7 +4,7 @@ Created on Mon Jun 14 14:38:24 2021
 
 @author: Servando
 """
-#Hola, buenas tardes, Servando
+#Hola, buenas tardes, Servando hehehe
 
 
 import problema_planificación_pddl_trabajo as probpl
