@@ -4,15 +4,12 @@ Created on Mon Jun 14 14:38:24 2021
 
 @author: Servando
 """
-#Hola, buenas tardes, Servando hehehe
 
 
 import problema_planificación_pddl_trabajo as probpl
 import búsqueda_espacio_estados_trabajo as búsqee
+import time
 
-#import time
-#start_time = time.time()
-#print("--- %s seconds ---" % (time.time() - start_time))
 
 #PROBLEMA RUEDA PINCHADA ---------------------------------------------------------
 
@@ -89,61 +86,71 @@ problema_imposible = probpl.ProblemaPlanificación(
     objetivosP=objetivoImposible.atomos
 )
 
+#Busqueda en profundidad
+start_time = time.time()
 búsqueda_profundidad = búsqee.BúsquedaEnProfundidad()
 búsqueda_profundidad.buscar(problema_rueda_pinchada)
+print("--- %s seconds ---" % (time.time() - start_time))
 
+#Busqueda en anchura
+start_time = time.time()
 búsqueda_anchura = búsqee.BúsquedaEnAnchura()
 búsqueda_anchura.buscar(problema_rueda_pinchada)
+print("--- %s seconds ---" % (time.time() - start_time))
 
-#Optima
+#Busqueda Optima
+start_time = time.time()
 busqueda_optima = búsqee.BúsquedaÓptima()
 busqueda_optima.buscar(problema_rueda_pinchada)
+print("--- %s seconds ---" % (time.time() - start_time))
 
-
-#Primero_mejor con heuristica de la practica
+#Busqueda Primero_mejor con heuristica 
+start_time = time.time()
 busqueda_primero_mejor = búsqee.BúsquedaPrimeroElMejor(búsqee.NodoConHeurística.f)
 busqueda_primero_mejor.buscar(problema_rueda_pinchada)
+print("--- %s seconds ---" % (time.time() - start_time))
 
-#Busqueda estrella con heuristica de la practica
+#Busqueda estrella con heuristica
+start_time = time.time()
 busqueda_estrella = búsqee.BúsquedaAEstrella(búsqee.NodoConHeurística.f)
 busqueda_estrella.buscar(problema_rueda_pinchada)
+print("--- %s seconds ---" % (time.time() - start_time))
 
 
 
 
 #Busqueda con y sin heuristica PRUEBAS ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-#Sin heuristica
-busqueda_sin_heuristica = búsqee.BúsquedaConHeuristica(búsqee.BúsquedaConHeuristica.pregoGeneral(estado_inicial_rueda, objetivosPositivos, operadores))
+#Sin heuristica 
+busqueda_sin_heuristica = búsqee.BúsquedaSinHeuristicaRueda(búsqee.BúsquedaSinHeuristicaRueda.f)
 busqueda_sin_heuristica.buscar(problema_rueda_pinchada)
 
-#Con heuristica
+#Con heuristica random 
 #La heuristica devuelve quitar_pinchada y guardar_pinchada pero la solucion correcta
 #es quitar_pinchada, sacar_repuesto y guardar_pinchada, ya que la heuristica no tiene en cuenta
 #las precondiciones negativas pero el problema si
-busqueda_con_heuristica = búsqee.BúsquedaConHeuristica(búsqee.BúsquedaConHeuristica.pregoGeneral(estado_inicial_rueda, objetivosPositivos, operadores,True))
+busqueda_con_heuristica = búsqee.BúsquedaConHeuristica()
 busqueda_con_heuristica.buscar(problema_rueda_pinchada)
-búsqee.BúsquedaConHeuristica.resolverConHeuristica(estado_inicial_rueda, objetivosPositivos, operadores,True)
+búsqee.BúsquedaConHeuristicaRuedaRecursiva.resolverConHeuristica(estado_inicial_rueda, objetivosPositivos, operadores,True)
 
-#Con heuristica PRUEBA -hace bien la heurística-
-busqueda_con_heuristica_prueba = búsqee.BúsquedaConHeuristicaPRUEBA(búsqee.BúsquedaConHeuristicaPRUEBA.pregoGeneral(estado_inicial_rueda, objetivosPositivos, operadores,True))
-busqueda_con_heuristica_prueba.buscarConHeuristica(problema_rueda_pinchada)
-
-#Con heuristica metiendole el problema
-busqueda_con_heuristica = búsqee.BúsquedaConHeuristica(búsqee.BúsquedaConHeuristica.pregoGeneral2(estado_inicial_rueda,problema_rueda_pinchada,True))
+#Con heuristica random 2
+busqueda_con_heuristica = búsqee.BúsquedaConHeuristica()
 busqueda_con_heuristica.buscar(problema_rueda_pinchada)
 
-
+#Con heuristica PRUEBA -hace bien la heurística problema recursivo-
+busqueda_con_heuristica_rueda_recursiva = búsqee.BúsquedaConHeuristicaRuedaRecursiva()
+busqueda_con_heuristica_rueda_recursiva.buscar(problema_rueda_pinchada)
 
 
 #Con heuristica, estado inicial = objetivo
-busqueda_con_heuristica_problema_facil = búsqee.BúsquedaConHeuristica(búsqee.BúsquedaConHeuristica.pregoGeneral(estado_inicial_rueda, estado_inicial_rueda, operadores,True))
+busqueda_con_heuristica_problema_facil = búsqee.BúsquedaConHeuristicaRuedaFacil()
 busqueda_con_heuristica_problema_facil.buscar(problema_facil)
-búsqee.BúsquedaConHeuristica.resolverConHeuristica(estado_inicial_rueda, estado_inicial_rueda, operadores,True)
+búsqee.BúsquedaConHeuristicaRuedaRecursiva.resolverConHeuristica(estado_inicial_rueda, estado_inicial_rueda, operadores,True)
+
 
 #Con heuristica imposible de resolver
-busqueda_con_heuristica_problema_imposible = búsqee.BúsquedaConHeuristica(búsqee.BúsquedaConHeuristica.pregoGeneral(estado_inicial_rueda, objetivoImposible, operadoresImposibleResolver,True))
+busqueda_con_heuristica_problema_imposible = búsqee.BúsquedaConHeuristicaRuedaImposible(búsqee.NodoConHeurísticaRuedaRecursiva.pregoGeneral(estado_inicial_rueda, objetivoImposible, operadoresImposibleResolver, True))
 #cuando es imposible el buscar da fallo
-busqueda_con_heuristica_problema_imposible.buscar(problema_imposible)
-búsqee.BúsquedaConHeuristica.resolverConHeuristica(estado_inicial_rueda, objetivoImposible, operadoresImposibleResolver,True)
+busqueda_con_heuristica_problema_imposible.buscar(problema_imposible)#Da fallo 
+búsqee.BúsquedaConHeuristicaRuedaRecursiva.resolverConHeuristica(estado_inicial_rueda, objetivoImposible, operadoresImposibleResolver,True)
 
